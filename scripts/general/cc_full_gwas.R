@@ -57,7 +57,10 @@ alleles_ab <- alleleConvert(output, "A", "B")
 #write.csv(allele_ab, "data/processed/snp_data/strain_mda_snps_ab.csv", row.names = F)
 
 #### Conver to binary ####
-binary <- alleles[6:74]
+
+
+
+binary <- output[6:74]
 binary[binary == "A"] <- 1
 binary[binary == "B"] <- 0
 binary[binary == "H"] <- 0.5
@@ -74,7 +77,6 @@ tertiary <- cbind(alleles[1:5], tertiary)
 write.csv(tertiary, "data/processed/snp_data/strain_mda_snps_tertiary.csv", row.names = F)
 
 ############### Time for the GWAS ##########################
-
 
 #Make the genotype/marker files file
 dup   <- as.numeric(row.names(tertiary[which(duplicated(tertiary$marker)),]))#find duplicate rs ids
