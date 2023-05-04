@@ -50,3 +50,9 @@ rsconnect/
 
 # Data folder
 data/
+
+# Images
+.png
+.pdf
+.jpeg
+
