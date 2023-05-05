@@ -33,4 +33,16 @@ docs/
 po/*~
 # RStudio Connect folder
 rsconnect/
+<<<<<<< HEAD
 cc_qtl.Rproj
+=======
+
+# Data folder
+data/
+
+# Images
+.png
+.pdf
+.jpeg
+
+>>>>>>> b16235aa2a8f965bdd8442af02f6480a6ccb1e43

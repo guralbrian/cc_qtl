@@ -85,9 +85,6 @@ MakelDirUnique = function(prefix){
 }
 
 dir_path <- MakelDirUnique(dir_path)
-
-
-
 dir.create(dir_path, showWarnings = FALSE)
 
 # Save the plot to the newly created folder
@@ -95,16 +92,19 @@ plot_file_path <- file.path(dir_path, paste0("plot_", current_date, ".png"))
 ggsave(filename = plot_file_path, plot = all_plots, width = 16, height = 20, dpi = "print")
 
 # Save the open scripts
-rstudioapi::documentSaveAll()
-
-# Copy the saved general scripts to the destination folder
-scripts <- list.files("scripts/general/")
-
-for(i in scripts){
-  script_dest <- file.path(dir_path, i)
-  script <- file.path("scripts/general", i)
-  file.copy(script, script_dest)
+SaveCopyScripts <- function(source = "scripts/general",
+                            destination = dir_path){
+  rstudioapi::documentSaveAll()
+  # Copy the saved general scripts to the destination folder
+  scripts <- list.files(source)
+  for(i in scripts){
+    script_dest <- file.path(dir_path, i)
+    script <- file.path(source, i)
+    file.copy(script, script_dest)
+  }
 }
+
+#SaveCopyScripts() 
 
 # Save the session info to the newly created folder
 writeLines(capture.output(sessionInfo()), 
