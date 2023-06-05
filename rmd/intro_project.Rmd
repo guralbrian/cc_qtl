@@ -1,0 +1,168 @@
+---
+title: "GWAS Intro"
+author: "Brian Gural"
+date: "6/5/2023"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Computational research and R\
+
+Welcome to the lab! This short doc is something I threw together to outline some computational-related stuff and your first project. I'll try to cover some barebones basics and your project, but this isn't comprehensive at all. Christoph and I are both happy to chat about any comp/project questions whenever you need! I only learned how to code when I joined last year, so I get how frustrating it can be. At the bottom, I'll list a bunch of links to other resources you can reference too.
+
+Nearly all of our computational work is done in R, so this first project is mostly meant to help you learn how it works. I think we're planning on setting you up at Gremlin, the Linux PC in the computational space, so you might need to learn a bit of bash if you don't already. R is almost always used within the RStudio IDE, so you'll also need to spend some time getting used to how it looks and works. There is also a computing cluster hosted by the university that we can try to set you up on, which runs an on demand RStudio service. That might be a good move if you're interested in learning more about cloud computing or want to be able to work out of your laptop more easily.
+
+Most of my time in R is spent "cleaning" data, basically reworking matrices to fit into my analysis pipeline. When cleaning data in R, there are two things you should always be thinking about: data structure and type. Both are like the DNA of R, they underpin everything we do. Get comfortable with these, and you'll find your R coding life will get a whole lot easier.
+
+### Data Structures
+
+By structure I mean how the data is formatted and stored. R has several data structures that you'll come across frequently. Here's a rundown of the key types:
+
+1. **Vectors**: These are sequences of data elements of the same basic type. Members of a vector all share the same type—be that numeric, character, or logical.
+```{r 1}
+numeric_vector <- c(1, 2, 3, 4)
+character_vector <- c("apple", "banana", "cherry")
+
+print(numeric_vector)
+print(character_vector)
+```
+\
+2. **Matrices**: A matrix is a two-dimensional dataset where all elements of the same column are of the same type.
+```{r 2, message=TRUE}
+my_matrix <- matrix(1:9, nrow = 3, ncol = 3)
+
+#print shows how the data looks
+print(my_matrix)
+
+# str() shows how the data is structured. 'int' means integer
+str(my_matrix)
+```
+\
+3. **Data Frames**: A data frame is another two-dimensional structure, a bit like a matrix but more flexible, as it allows for different types of data in different columns. This flexibility makes data frames an incredibly common sight in data analysis.
+
+```{r 3}
+df <- data.frame(Name = c("Alice", "Bob", "Charlie"),
+                 Age = c(24, 27, 22),
+                 Height = c(5.6, 5.9, 5.7))
+print(df)
+
+# Dataframes can hold many different types of data, super convenient
+str(df)
+```
+### Data Types
+
+1. **Numeric**: The default computational data type. If you assign a number to a variable, R will interpret it as numeric unless you tell it otherwise.
+```{r 4}
+a <- 42
+
+str(a)
+```
+
+2. **Character**: The character data type is used to store things you want to be read as text, more or less.
+```{r 5}
+b <- "Hello, world!"
+
+str(b)
+```
+
+3. **Logical**: True or false. Also called "Boolean"
+```{r 6}
+c <- a > 50  # This will return FALSE
+
+str(c)
+```
+There is a lot more we could cover here, but it normally works best to learn while working on a problem. Some other things you might want to read about are loops, conditional statements, piping, and the tidyverse. 
+
+## Your project
+
+### Intro
+
+In case you haven't had a chance to cover it with Christoph yet, I'm going to write out how I understand this project. 
+
+You're trying to run a GWAS on data we've been collecting on the collaborative cross (CC). Each strain of the CC differs genetically and we've been inducing heart failure in all of them. All of them have been genotyped before, so we have a large data frame that lists every location on the genome where they differ (i.e. location and allele for each strain). This is the data you'll be trying to reformat, but we'll come back to that.
+
+We also have a ton of phenotype data that you'll end up feeding into a GWAS algorithm with the genotypes. As you probably know, this is where we'll start making connections between genetic variants and differences in response. As far as I'm aware, that data will need much less work. You'll probably just need to make sure that columns and rows are labeled how they should be.
+
+An aside: Its important to note that at this step you're connecting variants in individual basepairs to phenotypes, not necessarily actual genes just yet. Its a small but super important distinction that can be lost on first pass. A lot of labs here spend huge amounts of time thinking of how to best connect the variants to genes/mechanisms. I'm happy to make time to talk about that if you're interested in how modern population genetics works! At the bottom I've listed a paper that explains the CC and another that talks about how population-scale studies have been used. You're totally not obligated to read these, they're just if you're interested.
+
+Another thing to note: I've set up the scripts on Gremlin to be in an .Rproj, a way to manage different projects in R that I've found super useful. Basically, it takes all of the information from your RStudio session and keeps it in one place. I think there are a lot of advantages to this set up. For example, normally in R you'd need to set a working directory, a path to a folder that you reference whenever you look for files to save or load. In an R project, any script you have will automatically use the location of the .Rproj as the working directory. Also, RStudio tracks your session information, so when you open and close RStudio, your data and scripts open back up. R projects store this automatically and make it super easy to swap back and forth between projects. This part might be that useful to you right now, but would be good to keep in mind if you want to do comp work later in your career. 
+
+
+### Load data and packages\
+
+At the beginning of R scripts, you typically load packages and data. This is pretty much what import does in python.
+```{r load libs, echo=TRUE, message=FALSE, warning=FALSE, cache=FALSE}
+library(dplyr)
+library(statgenGWAS)
+library(ggplot2)
+library(dMod)
+library(readxl)
+
+# Read in Data 
+s_mda_snp <- read.csv("data/processed/snp_data/Strain_MDA SNPs.csv")
+pheno <- read.csv("data/processed/phenotype_data/Phenotype_Iso_Full.csv")
+```
+
+Note that to load the data I just reference the data folder first, rather than a total file path. I set up the .Rproj to be in a folder that has three sub folders: rmd, data, and scripts. We can talk more about this I think it's easier to keep track of your work when you use a standard directory tree for your projects. Also, the rmd folder is for RMarkdown files, which is how I made this document and are great for tracking and communicating your work.
+
+### What the data currently looks like
+
+```{r print data, warning=FALSE, cache=FALSE}
+
+str(s_mda_snp)
+```
+
+So this is a bit of a doosy, but what we're looking at is a data frame with several types of data. When it says "470822 obs. of  72 variables", it means that we have 470,822 observations of 72 variables, or 470,822 rows and 72 columns. The dollar signs are an operator in R. They're used to access columns of a data frame. So to access the chromosome data we could do something like this: 
+```{r column example}
+# return the first few rows
+head(s_mda_snp$chr)
+
+# list each unique value 
+unique(s_mda_snp$chr)
+```
+
+### What we're asking you to do
+
+1. At each SNP, what is the most common allele within all of the strains?
+    * You'll need to consider each row and tally the alleles, then record the most and least common in the CC columns.
+    * RS####### is the unique identifier for SNPs
+    
+2. The function wants the alleles of each strain formated with how many copies of the major allele they have.
+    * For example, if the most common allele at RS99999 is 'C', then alleles with reporting 'C' need to be converted to '2', since they're homozygous for the 'C' allele. If there is an 'H', then the strain is heterozygous and only has '1' of the major alleles. If a strain has an 'A' allele, then it would be converted to a '0'.
+3. We're only interested in autosomes, so exclude anything not on a numbered chromosome (no "MT", "Y", or "X")
+    
+Here is an example of how the first row should look 
+```{r print example, warning=FALSE, cache=FALSE}
+row1 <- c('rs32166183', '1', '3046097', 'A', 'C', '0', '0', '0', '2', '2', '2', '2', '0', '0', '0', '0', '0', '0', '0', '2', '0', '0', '0', '2', '2', '0', '2', '0', '2', '0', '0', '2', '0', '0', '0', '2', '2', '0', '0', '0', '0', '2', '2', '0', '2', '0', '0', '2', '2', '0', '2', '2', '0', '0', '0', '0', '0', '2', '0', '2', '0', '1', '2', '0', '0', '0', '0', '2', '2', '0', '2', '2', '0', '2')
+
+example <- matrix(row1, nrow = 1) |>
+            as.data.frame()
+
+cc <- grep("^CC", colnames(s_mda_snp), value = TRUE)
+
+colnames(example) <- c(colnames(s_mda_snp[which(colnames(s_mda_snp) %in% cc == FALSE)]), 
+                       "Allele_A", "Allele_B",
+                       colnames(s_mda_snp[which(colnames(s_mda_snp) %in% cc == TRUE)])
+                       )
+
+example
+```
+
+## References
+
+[An Introduction to R](https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf) \
+Bread and butter intro course. Likely very boring, but does cover things very well. It's nothing you can't learn from on-the-fly misc googling, but it's all in one place. Plus, it has things you might not know to look up.
+
+[Why care about the tidyverse](https://bookdown.org/adam_aiken/rboot/tidyverse.html)
+
+[Collaborative Cross and Diverse Mouse Panels](https://www.cell.com/trends/genetics/fulltext/S0168-9525%2819%2930065-4)
+
+[History of modern genetics](https://www.nature.com/articles/s41586-019-1879-7)
+
+[15 Years of GWAS](https://www.nature.com/articles/s41467-020-19653-5)

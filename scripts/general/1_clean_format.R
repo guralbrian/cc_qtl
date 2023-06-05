@@ -6,11 +6,8 @@ library(dMod)
 library(readxl)
 
 # Read in Data 
-s_mda_snp <- read.csv("data/processed/snp_data/strain_mda_snps.csv")
-s_geno_allele <- read.csv("data/processed/snp_data/strain_genotypes.csv")
-sac <- readxl::read_excel("data/processed/phenotype_data/strain_averages_ctrl.xlsx")
-sai <- readxl::read_excel("data/processed/phenotype_data/strain_averages_iso.xlsx")
-pheno <- read.csv("data/processed/phenotype_data/phenotype_iso_small.csv")
+s_mda_snp <- read.csv("data/processed/snp_data/Strain_MDA SNPs.csv")
+pheno <- read.csv("data/processed/phenotype_data/Phenotype_Iso_Full.csv")
 
 # Remove the unnecessary rows
 s_mda_snp <- s_mda_snp[c(which(s_mda_snp$chr != "X" & 
@@ -68,20 +65,20 @@ write.csv(alleles_ab, "data/processed/snp_data/strain_mda_snps_ab.csv", row.name
 cc <- grep("^CC", colnames(output), value = TRUE) # Select strain allele columns
 not_cc <- colnames(output[which(colnames(output) %in% cc == FALSE)]) # And everything else
 
-binary <- output[cc]
+binary <- alleles_ab[cc]
 binary[binary == "A"] <- 1
 binary[binary == "B"] <- 0
 binary[binary == "H"] <- 0.5
-binary <- cbind(output[not_cc], binary)
+binary <- cbind(alleles_ab[not_cc], binary)
 
 write.csv(binary, "data/processed/snp_data/strain_mda_snps_binary.csv", row.names = FALSE)
 
 # It wants weird 0, 1, 2 instead of 1, 0, 0.5
-tertiary <- output[cc]
+tertiary <- alleles_ab[cc]
 tertiary[tertiary == "A"] <- 0
 tertiary[tertiary == "B"] <- 2
 tertiary[tertiary == "H"] <- 1
-tertiary <- cbind(output[not_cc], tertiary)
+tertiary <- cbind(alleles_ab[not_cc], tertiary)
 
 write.csv(tertiary, "data/processed/snp_data/strain_mda_snps_tertiary.csv", row.names = FALSE)
 
@@ -91,4 +88,9 @@ colnames(pheno)[1] <- "genotype"
 pheno$Mouse[which(pheno$Mouse != "NA")] <- "yes" # Makes all values the same case
 row.names(pheno) <- pheno$genotype
 
-write.csv(pheno, "data/processed/phenotype_data/phenotype_iso_small_clean.csv", row.names = TRUE)
+write.csv(pheno, "data/processed/phenotype_data/phenotype_iso_clean.csv", row.names = TRUE)
+
+
+words <- "rs32166183 1 3046097 A C 0 0 0 2 2 2 2 0 0 0 0 0 0 0 2 0 0 0 2 2 0 2 0 2 0 0 2 0 0 0 2 2 0 0 0 0 2 2 0 2 0 0 2 2 0 2 2 0 0 0 0 0 2 0 2 0 1 2 0 0 0 0 2 2 0 2 2 0 2"
+sapply(strsplit(words, '[, ]+'), function(x) toString(dQuote(x)))
+sapply(strsplit(words, '[, ]+'), function(x) toString(dQuote(x, FALSE)))
